@@ -1,5 +1,5 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-import { getDatabase, ref, push, onChildAdded, set, onValue, update, remove, get, query, orderByChild, equalTo } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+import { getDatabase, ref, push, onChildAdded, set, onValue, update, remove, get } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyASxTiAzWJ3TNJ8OZLxNiNR85dbAl68t-U",
@@ -14,26 +14,29 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 
+// Gerenciamento de Sessão
 let userId = localStorage.getItem('zeniro_uid') || 'user_' + Math.random().toString(36).substr(2, 9);
 localStorage.setItem('zeniro_uid', userId);
 
-// --- ELEMENTOS GLOBAIS ---
 const $ = id => document.getElementById(id);
+
+// Variáveis de Estado
 let currentServerId = 'global';
 let userProfile = { name: 'Usuário', avatar: '', banner: '', font: "'Inter', sans-serif", bio: '' };
 let replyingTo = null;
 let localStream = null;
 let peerConnection = null;
+let loadedMessages = {};
 
 // ==========================================
-// 1. SIDEBAR E NAVEGAÇÃO MOBILE
+// 1. NAVEGAÇÃO E SIDEBAR MOBILE
 // ==========================================
 $('mobile-menu-btn').addEventListener('click', () => {
     $('server-sidebar').classList.add('open');
     $('channel-sidebar').classList.add('open');
     $('sidebar-backdrop').classList.remove('hidden');
     setTimeout(() => $('sidebar-backdrop').classList.add('show'), 10);
-    $('mobile-menu-btn').classList.add('hide'); // Some com o botão
+    $('mobile-menu-btn').classList.add('hide');
 });
 
 $('sidebar-backdrop').addEventListener('click', () => {
@@ -41,25 +44,25 @@ $('sidebar-backdrop').addEventListener('click', () => {
     $('channel-sidebar').classList.remove('open');
     $('sidebar-backdrop').classList.remove('show');
     setTimeout(() => $('sidebar-backdrop').classList.add('hidden'), 300);
-    $('mobile-menu-btn').classList.remove('hide'); // Volta o botão
+    $('mobile-menu-btn').classList.remove('hide');
 });
 
 // ==========================================
-// 2. PERFIL (PREVIEW EM TEMPO REAL)
+// 2. PERFIL (PREVIEW E EDIÇÃO)
 // ==========================================
 window.updatePreview = () => {
     const name = $('edit-name').value || 'Seu Nome';
     const bio = $('edit-bio').value || 'Sua bio...';
     const font = $('edit-font').value;
     const avatar = $('edit-avatar-url').value || userProfile.avatar || 'zenirobg.png';
-    const banner = $('edit-banner-url').value || userProfile.banner || '#5865F2';
+    const banner = $('edit-banner-url').value || userProfile.banner;
 
     $('preview-name').innerText = name;
     $('preview-name').style.fontFamily = font;
     $('preview-bio').innerText = bio;
     $('preview-avatar').src = avatar;
-    $('preview-banner').style.backgroundImage = banner.startsWith('http') || banner.startsWith('data:') ? `url(${banner})` : 'none';
-    $('preview-banner').style.backgroundColor = banner.startsWith('#') ? banner : '#5865F2';
+    if (banner) $('preview-banner').style.backgroundImage = `url(${banner})`;
+    else $('preview-banner').style.backgroundImage = 'none';
 };
 
 const userRef = ref(db, 'users/' + userId);
@@ -70,10 +73,9 @@ onValue(userRef, (snapshot) => {
         $('my-name').style.fontFamily = userProfile.font;
         $('my-avatar').src = userProfile.avatar || 'zenirobg.png';
         
-        // Preencher inputs
-        $('edit-name').value = userProfile.name;
+        $('edit-name').value = userProfile.name || '';
         $('edit-bio').value = userProfile.bio || '';
-        $('edit-font').value = userProfile.font;
+        $('edit-font').value = userProfile.font || "'Inter', sans-serif";
         $('edit-avatar-url').value = userProfile.avatar || '';
         $('edit-banner-url').value = userProfile.banner || '';
         updatePreview();
@@ -85,7 +87,6 @@ onValue(userRef, (snapshot) => {
 $('edit-profile-btn').addEventListener('click', () => $('profile-modal').classList.remove('hidden'));
 document.querySelectorAll('.close-modal').forEach(btn => btn.addEventListener('click', () => $('profile-modal').classList.add('hidden')));
 
-// Upload Base64 no Perfil
 let newAvatarBase64 = null;
 $('edit-avatar-file').addEventListener('change', (e) => {
     const file = e.target.files[0];
@@ -101,10 +102,10 @@ $('edit-avatar-file').addEventListener('change', (e) => {
 
 $('save-profile').addEventListener('click', () => {
     update(userRef, {
-        name: $('edit-name').value,
+        name: $('edit-name').value || 'Usuário',
         bio: $('edit-bio').value,
         font: $('edit-font').value,
-        avatar: newAvatarBase64 || $('edit-avatar-url').value,
+        avatar: newAvatarBase64 || $('edit-avatar-url').value || 'zenirobg.png',
         banner: $('edit-banner-url').value
     });
     newAvatarBase64 = null;
@@ -112,18 +113,15 @@ $('save-profile').addEventListener('click', () => {
 });
 
 // ==========================================
-// 3. SERVIDORES (LOCAIS E PÚBLICOS + BUSCA)
+// 3. SISTEMA DE SERVIDORES
 // ==========================================
 const serversRef = ref(db, 'servers');
 const serverList = $('server-list');
 
-// Escutar apenas servidores que o usuário é membro
-const userServersRef = ref(db, 'users/' + userId + '/servers');
-onValue(userServersRef, (snapshot) => {
+onValue(ref(db, 'users/' + userId + '/servers'), (snapshot) => {
     const myServers = snapshot.val() || {};
     serverList.innerHTML = '';
     
-    // Adiciona servidores
     for (const id in myServers) {
         if (myServers[id] === true) {
             get(ref(db, 'servers/' + id)).then(snap => {
@@ -140,24 +138,18 @@ onValue(userServersRef, (snapshot) => {
     }
 });
 
-// Criar Servidor
 $('create-server-btn').addEventListener('click', () => {
     const name = prompt("Nome do Servidor:");
     if (!name) return;
-    const isPublic = confirm("Este servidor será Público? (OK = Sim, Cancelar = Privado)");
+    const isPublic = confirm("Servidor Público? (OK = Sim / Cancelar = Apenas Local)");
     
     const newRef = push(serversRef);
     const serverId = newRef.key;
-    
-    // Salva o servidor
     set(newRef, { name, owner: userId, isPublic });
-    // Adiciona o usuário como membro
     set(ref(db, `users/${userId}/servers/${serverId}`), true);
-    
     switchServer(serverId, name);
 });
 
-// Buscar Servidores Públicos
 $('search-server-btn').addEventListener('click', () => $('search-server-modal').classList.remove('hidden'));
 document.querySelector('.close-search-modal').addEventListener('click', () => $('search-server-modal').classList.add('hidden'));
 
@@ -174,27 +166,23 @@ $('search-server-input').addEventListener('input', async (e) => {
         for (const id in servers) {
             const s = servers[id];
             if (s.isPublic && s.name.toLowerCase().includes(term)) {
-                // Verifica se já é membro
                 const memberSnap = await get(ref(db, `users/${userId}/servers/${id}`));
                 const isMember = memberSnap.exists();
 
                 const div = document.createElement('div');
                 div.className = 'search-result-item';
                 div.innerHTML = `
-                    <div>
-                        <strong>${s.name}</strong>
-                        <p>${s.isPublic ? 'Público' : 'Privado'}</p>
-                    </div>
+                    <div><strong>${s.name}</strong><p>Público</p></div>
                     <button class="${isMember ? 'danger-btn' : 'primary-btn'}">${isMember ? 'Sair' : 'Entrar'}</button>
                 `;
                 div.querySelector('button').onclick = () => {
                     if (isMember) {
                         remove(ref(db, `users/${userId}/servers/${id}`));
+                        if (currentServerId === id) switchServer('global', 'Início');
                     } else {
                         set(ref(db, `users/${userId}/servers/${id}`), true);
                     }
                     $('search-server-modal').classList.add('hidden');
-                    if (currentServerId === id && isMember) switchServer('global', 'Início');
                 };
                 $('search-results').appendChild(div);
             }
@@ -206,19 +194,13 @@ function switchServer(id, name) {
     currentServerId = id;
     $('current-server-name').innerText = name;
     $('edit-server-btn').classList.toggle('hidden', id === 'global');
-    
-    // Fecha menu mobile
     $('sidebar-backdrop').click();
-    
     loadMessages();
-}
-
+}// ==========================================
+// 4. CHAT, EMOJIS E GIFS
 // ==========================================
-// 4. CHAT, EMOJIS, GIFS E RESPOSTAS
-// ==========================================
+const emojiData = ['😀','😃','😄','😁','😆','😅','😂','🤣','😊','😇','🙂','🙃','😉','😌','😍','🥰','😘','😗','😙','😚','😋','😛','😝','😜','🤪','🤨','🧐','🤓','😎','🤩','🥳','😏','😒','😞','😔','😟','😕','🙁','☹️','😣','😖','😫','😩','🥺','😢','😭','😤','😠','😡','🤬','🤯','😳','🥵','🥶','😱','😨','😰','😥','😓','🤗','🤔','🤭','🤫','🤥','😶','😐','😑','😬','🙄','😯','😦','😧','😮','😲','🥱','😴','🤤','😪','😵','🤐','🥴','🤢','🤮','🤧','😷','🤒','🤕','🤑','🤠','😈','👿','👹','👺','🤡','💩','👻','💀','☠️','👽','👾','🤖','🎃','😺','😸','😹','😻','😼','😽','🙀','😿','😾','🔥','👍','👎','👊','✌️','🤞','🖐️','✋','🤚','👋','🤙','💪','🙏','🎮','🎲','🎯','🏆','⚽','🏀','🎸','🎧','🎤','💻','📱','💡','❤️','🧡','💛','💚','💙','💜','🖤','🤍','💔','💯','💢','💥','💫','💦','💨','🕳️','💣','💬','💤'];
 
-// Emojis
-const emojiData = ['😀','😃','😄','😁','😆','😅','😂','🤣','😊','😇','🙂','🙃','😉','😌','😍','🥰','😘','😗','😙','😚','😋','😛','😝','😜','🤪','🤨','🧐','🤓','😎','🤩','🥳','😏','😒','😞','😔','😟','😕','🙁','☹️','😣','😖','😫','😩','🥺','😢','😭','😤','😠','😡','🤬','🤯','😳','🥵','🥶','😱','😨','😰','😥','😓','🤗','🤔','🤭','🤫','🤥','😶','😐','😑','😬','🙄','😯','😦','😧','😮','😲','🥱','😴','🤤','😪','😵','🤐','🥴','🤢','🤮','🤧','😷','🤒','🤕','🤑','🤠','😈','👿','👹','👺','🤡','💩','👻','💀','☠️','👽','👾','🤖','🎃','😺','😸','😹','😻','😼','😽','🙀','😿','😾'];
 $('emoji-btn').addEventListener('click', () => {
     const list = $('emoji-list');
     if (list.innerHTML === '') {
@@ -234,7 +216,7 @@ $('emoji-btn').addEventListener('click', () => {
 });
 
 // API de GIFs (Tenor)
-const TENOR_API_KEY = 'LIVDSRZULELA'; // Chave pública para testes
+const TENOR_API_KEY = 'LIVDSRZULELA';
 $('gif-btn').addEventListener('click', () => {
     $('gif-picker').classList.toggle('hidden');
     $('emoji-picker').classList.add('hidden');
@@ -246,101 +228,78 @@ $('gif-search').addEventListener('keypress', async (e) => {
         const url = `https://tenor.googleapis.com/v2/search?q=${query}&key=${TENOR_API_KEY}&limit=12`;
         const res = await fetch(url);
         const data = await res.json();
-        
         $('gif-list').innerHTML = '';
         data.results.forEach(gif => {
             const img = document.createElement('img');
             img.src = gif.media_formats.tinygif.url;
-            img.onclick = () => sendMessage(gif.media_formats.gif.url, 'gif');
-            $('gif-list').appendChild(img);
+            img.onclick = () => { sendMessage(gif.media_formats.gif.url, 'gif'); $('gif-picker').classList.add('hidden'); };
+            $('gif-list').append(img);
         });
     }
 });
 
-// Lógica de Upload de Imagem com Redimensionamento
+// Upload de Imagem com Redimensionamento (Canvas)
 $('plus-btn').addEventListener('click', () => $('image-upload').click());
 $('image-upload').addEventListener('change', (e) => {
     const file = e.target.files[0];
     if (!file) return;
-
     const reader = new FileReader();
     reader.onload = (ev) => {
         const img = new Image();
         img.onload = () => {
             const canvas = $('resize-canvas');
             const ctx = canvas.getContext('2d');
-            
-            // Redimensiona para no máximo 800px
-            let width = img.width;
-            let height = img.height;
+            let width = img.width, height = img.height;
             const MAX_SIZE = 800;
-            
-            if (width > height && width > MAX_SIZE) {
-                height *= MAX_SIZE / width;
-                width = MAX_SIZE;
-            } else if (height > MAX_SIZE) {
-                width *= MAX_SIZE / height;
-                height = MAX_SIZE;
-            }
-            
-            canvas.width = width;
-            canvas.height = height;
+            if (width > height && width > MAX_SIZE) { height *= MAX_SIZE / width; width = MAX_SIZE; }
+            else if (height > MAX_SIZE) { width *= MAX_SIZE / height; height = MAX_SIZE; }
+            canvas.width = width; canvas.height = height;
             ctx.drawImage(img, 0, 0, width, height);
-            
-            // Comprime para JPEG com 70% de qualidade para não estourar o DB
-            const base64Str = canvas.toDataURL('image/jpeg', 0.7);
-            sendMessage(base64Str, 'image');
+            sendMessage(canvas.toDataURL('image/jpeg', 0.7), 'image');
         };
         img.src = ev.target.result;
     };
     reader.readAsDataURL(file);
 });
 
-// LONG PRESS (Segurar para responder)
+// ==========================================
+// 5. LÓGICA DE MENSAGENS E RESPOSTAS (LONG PRESS)
+// ==========================================
 let pressTimer;
 const contextMenu = $('context-menu');
 let selectedMessageId = null;
 
 function attachLongPress(element, msgId, senderName, msgText) {
     const startPress = (e) => {
-        // Ignora se for scroll
-        if (e.type === 'touchstart') {
-            const touch = e.touches[0];
-            element.dataset.startY = touch.clientY;
-        }
+        if (e.type === 'touchstart') element.dataset.startY = e.touches[0].clientY;
         
         pressTimer = setTimeout(() => {
-            // Previne o menu padrão do navegador
-            if (e.type === 'touchstart') e.preventDefault(); 
-            
+            if (e.type === 'touchstart' && e.cancelable) e.preventDefault(); 
             selectedMessageId = msgId;
             $('reply-name').innerText = senderName;
             $('reply-text').innerText = msgText;
             
-            // Posicionar menu
             const rect = element.getBoundingClientRect();
-            contextMenu.style.top = `${rect.top}px`;
-            contextMenu.style.left = `${rect.left + 50}px`;
+            contextMenu.style.top = `${Math.min(rect.top, window.innerHeight - 100)}px`;
+            contextMenu.style.left = `${Math.min(rect.left + 20, window.innerWidth - 120)}px`;
             contextMenu.classList.remove('hidden');
         }, 500);
     };
-
+    
     const cancelPress = (e) => {
         if (e.type === 'touchmove') {
-            const touch = e.touches[0];
-            const startY = element.dataset.startY;
-            if (Math.abs(touch.clientY - startY) > 10) clearTimeout(pressTimer); // Cancelou por scroll
+            if (Math.abs(e.touches[0].clientY - element.dataset.startY) > 10) clearTimeout(pressTimer);
         }
         clearTimeout(pressTimer);
     };
-
+    
     element.addEventListener('mousedown', startPress);
     element.addEventListener('touchstart', startPress, {passive: false});
     element.addEventListener('mouseup', cancelPress);
     element.addEventListener('mouseleave', cancelPress);
     element.addEventListener('touchend', cancelPress);
     element.addEventListener('touchmove', cancelPress);
-    element.addEventListener('contextmenu', (e) => e.preventDefault()); // Bloqueia menu nativo
+    element.addEventListener('contextmenu', (e) => e.preventDefault());
 }
 
 $('ctx-reply').addEventListener('click', () => {
@@ -349,27 +308,20 @@ $('ctx-reply').addEventListener('click', () => {
     contextMenu.classList.add('hidden');
     $('message-input').focus();
 });
+
 $('cancel-reply').addEventListener('click', () => {
     replyingTo = null;
     $('reply-context').classList.add('hidden');
 });
 
-// Função de Enviar Mensagem
-function sendMessage(content, type = 'text', replyData = null) {
+function sendMessage(content, type = 'text') {
     if (!content.trim() && type === 'text') return;
-    
     push(ref(db, `messages/${currentServerId}/geral`), {
-        userId, 
-        name: userProfile.name, 
-        avatar: userProfile.avatar || 'zenirobg.png', 
-        font: userProfile.font, 
-        text: type === 'text' ? content : '',
-        media: type !== 'text' ? content : '',
-        type: type,
-        replyTo: replyingTo ? replyData : null,
-        timestamp: Date.now()
+        userId, name: userProfile.name, avatar: userProfile.avatar || 'zenirobg.png', 
+        font: userProfile.font, text: type === 'text' ? content : '',
+        media: type !== 'text' ? content : '', type: type,
+        replyTo: replyingTo, timestamp: Date.now()
     });
-    
     $('message-input').value = '';
     $('emoji-picker').classList.add('hidden');
     $('gif-picker').classList.add('hidden');
@@ -380,38 +332,25 @@ function sendMessage(content, type = 'text', replyData = null) {
 $('send-btn').addEventListener('click', () => sendMessage($('message-input').value));
 $('message-input').addEventListener('keypress', (e) => { if (e.key === 'Enter') sendMessage($('message-input').value); });
 
-// Renderizar Mensagens
-let loadedMessages = {};
 function loadMessages() {
-    $('messages-container').innerHTML = '<div class="empty-bg"><img src="zenirobg.png"></div>';
-    const chatRef = ref(db, `messages/${currentServerId}/geral`);
-    onChildAdded(chatRef, (snapshot) => {
+    const container = $('messages-container');
+    container.innerHTML = '<div class="empty-bg"><img src="zenirobg.png"></div>';
+    loadedMessages = {};
+    
+    onChildAdded(ref(db, `messages/${currentServerId}/geral`), (snapshot) => {
         const data = snapshot.val();
         const msgId = snapshot.key;
-        if (loadedMessages[msgId]) return; // Evita duplicação ao trocar de servidor
+        if (loadedMessages[msgId]) return;
         loadedMessages[msgId] = true;
 
         const div = document.createElement('div');
         div.className = 'message';
-        div.id = `msg-${msgId}`;
         
-        let mediaHtml = '';
-        if (data.type === 'image') {
-            mediaHtml = `<img src="${data.media}" class="msg-image" onclick="openImage('${data.media}')">`;
-        } else if (data.type === 'gif') {
-            mediaHtml = `<img src="${data.media}" class="msg-image">`;
-        }
-
-        let replyHtml = '';
-        if (data.replyTo) {
-            replyHtml = `<div class="msg-reply-context">
-                <strong>${data.replyTo.name}</strong>
-                <div>${data.replyTo.text}</div>
-            </div>`;
-        }
+        let mediaHtml = data.type === 'image' || data.type === 'gif' ? `<img src="${data.media}" class="msg-image" onclick="openImage('${data.media}')">` : '';
+        let replyHtml = data.replyTo ? `<div class="msg-reply-context"><strong>${data.replyTo.name}</strong><div>${data.replyTo.text.substring(0, 50)}</div></div>` : '';
 
         div.innerHTML = `
-            <img class="avatar" src="${data.avatar}" alt="Avatar" onerror="this.src='zenirobg.png'">
+            <img class="avatar" src="${data.avatar}" onerror="this.src='zenirobg.png'">
             <div class="msg-content">
                 <div class="msg-header">
                     <span style="font-family: ${data.font}">${data.name}</span>
@@ -421,24 +360,18 @@ function loadMessages() {
                 ${data.type === 'text' ? `<div class="msg-text">${data.text}</div>` : mediaHtml}
             </div>
         `;
-        
-        // Adiciona long press para responder
-        attachLongPress(div, msgId, data.name, data.type === 'text' ? data.text : 'Imagem/GIF');
-
-        $('messages-container').appendChild(div);
-        $('messages-container').scrollTop = $('messages-container').scrollHeight;
+        attachLongPress(div, msgId, data.name, data.type === 'text' ? data.text : 'Imagem');
+        container.appendChild(div);
+        container.scrollTop = container.scrollHeight;
     });
 }
 
-// Visualizador de Imagem Tela Cheia
 window.openImage = (src) => {
     $('viewer-img').src = src;
     $('download-img-btn').href = src;
     $('image-viewer').classList.remove('hidden');
-};
-
-// ==========================================
-// 5. WEBRTC E CONFIGURAÇÕES DE CHAMADA
+};// ==========================================
+// 6. WEBRTC (CALLS DE ÁUDIO E VÍDEO)
 // ==========================================
 const rtcConfig = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] };
 
@@ -447,61 +380,97 @@ async function initCall(video = true) {
         localStream = await navigator.mediaDevices.getUserMedia({ video, audio: true });
         $('local-video').srcObject = localStream;
         $('call-overlay').classList.remove('hidden');
-        
-        await populateDevices(); // Carrega lista de mics/cams
+        await populateDevices();
 
         peerConnection = new RTCPeerConnection(rtcConfig);
         localStream.getTracks().forEach(track => peerConnection.addTrack(track, localStream));
-
-        peerConnection.onicecandidate = (event) => {
-            if (event.candidate) push(ref(db, `calls/${currentServerId}/candidates`), event.candidate.toJSON());
-        };
-
-        peerConnection.ontrack = (event) => {
-            $('remote-video').srcObject = event.streams[0];
-        };
+        
+        peerConnection.onicecandidate = (e) => { if (e.candidate) push(ref(db, `calls/${currentServerId}/candidates`), e.candidate.toJSON()); };
+        peerConnection.ontrack = (e) => { $('remote-video').srcObject = e.streams[0]; };
 
         const offer = await peerConnection.createOffer();
         await peerConnection.setLocalDescription(offer);
         set(ref(db, `calls/${currentServerId}/offer`), { offer, caller: userId });
-
-    } catch (err) {
-        alert("Erro ao acessar câmera/microfone: " + err.message);
-    }
+    } catch (err) { alert("Erro ao acessar mídia: " + err.message); }
 }
 
 async function populateDevices() {
     const devices = await navigator.mediaDevices.enumerateDevices();
-    const micSelect = $('mic-select');
-    const camSelect = $('camera-select');
+    const micSelect = $('mic-select'), camSelect = $('camera-select');
     micSelect.innerHTML = ''; camSelect.innerHTML = '';
-
-    devices.forEach(device => {
-        if (device.kind === 'audioinput') {
-            const opt = document.createElement('option');
-            opt.value = device.deviceId; opt.text = device.label || 'Microfone Padrão';
-            micSelect.appendChild(opt);
-        }
-        if (device.kind === 'videoinput') {
-            const opt = document.createElement('option');
-            opt.value = device.deviceId; opt.text = device.label || 'Câmera Padrão';
-            camSelect.appendChild(opt);
-        }
+    devices.forEach(d => {
+        if (d.kind === 'audioinput') micSelect.innerHTML += `<option value="${d.deviceId}">${d.label || 'Microfone Padrão'}</option>`;
+        if (d.kind === 'videoinput') camSelect.innerHTML += `<option value="${d.deviceId}">${d.label || 'Câmera Padrão'}</option>`;
     });
 }
 
-// Configurações de Call UI
 $('call-settings-btn').addEventListener('click', () => $('call-settings-panel').classList.toggle('hidden'));
 $('close-call-settings').addEventListener('click', () => $('call-settings-panel').classList.add('hidden'));
 
-// Receber Chamada
 onValue(ref(db, `calls/${currentServerId}/offer`), async (snapshot) => {
     const data = snapshot.val();
     if (data && data.caller !== userId && !peerConnection) {
         $('call-overlay').classList.remove('hidden');
         peerConnection = new RTCPeerConnection(rtcConfig);
+        peerConnection.onicecandidate = (e) => { if (e.candidate) push(ref(db, `calls/${currentServerId}/candidates`), e.candidate.toJSON()); };
+        peerConnection.ontrack = (e) => { $('remote-video').srcObject = e.streams[0]; };
         
-        peerConnection.onicecandidate = (event) => {
-            if (event.candidate) push(ref(db, `calls/${currentServerId}/candidates`), event.candidate.toJSON());
-        };
-        peerConnection.ontrack =
+        await peerConnection.setRemoteDescription(new RTCSessionDescription(data.offer));
+        const answer = await peerConnection.createAnswer();
+        await peerConnection.setLocalDescription(answer);
+        set(ref(db, `calls/${currentServerId}/answer`), { answer, answerer: userId });
+        
+        localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+        localStream.getTracks().forEach(track => peerConnection.addTrack(track, localStream));
+        $('local-video').srcObject = localStream;
+        await populateDevices();
+    }
+});
+
+onValue(ref(db, `calls/${currentServerId}/answer`), async (snapshot) => {
+    const data = snapshot.val();
+    if (data && data.answerer !== userId && peerConnection && !peerConnection.currentRemoteDescription) {
+        await peerConnection.setRemoteDescription(new RTCSessionDescription(data.answer));
+    }
+});
+
+onChildAdded(ref(db, `calls/${currentServerId}/candidates`), async (snapshot) => {
+    if (peerConnection) await peerConnection.addIceCandidate(new RTCIceCandidate(snapshot.val()));
+});
+
+// Controles da Call
+$('toggle-mic').addEventListener('click', function() {
+    const track = localStream.getAudioTracks()[0];
+    track.enabled = !track.enabled;
+    this.classList.toggle('active');
+});
+
+$('toggle-video').addEventListener('click', function() {
+    const track = localStream.getVideoTracks()[0];
+    if (track) {
+        track.enabled = !track.enabled;
+        this.classList.toggle('active');
+        $('local-video').style.opacity = track.enabled ? '1' : '0.2';
+    }
+});
+
+$('end-call').addEventListener('click', () => {
+    if (peerConnection) peerConnection.close();
+    if (localStream) localStream.getTracks().forEach(track => track.stop());
+    $('call-overlay').classList.add('hidden');
+    remove(ref(db, `calls/${currentServerId}/offer`));
+    remove(ref(db, `calls/${currentServerId}/answer`));
+    peerConnection = null; localStream = null;
+});
+
+$('start-audio-call').addEventListener('click', () => initCall(false));
+$('start-video-call').addEventListener('click', () => initCall(true));
+
+// Fechar menus ao clicar fora
+window.addEventListener('click', (e) => {
+    if (!e.target.closest('.message') && !e.target.closest('#context-menu')) {
+        $('context-menu').classList.add('hidden');
+    }
+    if (!e.target.closest('#emoji-picker') && !e.target.closest('#emoji-btn')) $('emoji-picker').classList.add('hidden');
+    if (!e.target.closest('#gif-picker') && !e.target.closest('#gif-btn')) $('gif-picker').classList.add('hidden');
+});
