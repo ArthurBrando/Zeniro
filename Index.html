@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Zeniro - O seu espaço</title>
+    <link rel="icon" href="zeniro.ico" type="image/x-icon">
+    <link rel="stylesheet" href="style.css">
+    <!-- Fontes do Google para os Nicks customizados -->
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&family=Press+Start+2P&family=Pacifico&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar de Servidores -->
+        <nav class="server-sidebar">
+            <div class="server-icon active" title="Início">Z</div>
+            <div class="server-icon" title="Servidor 1">S1</div>
+            <div class="server-icon add-server" title="Adicionar Servidor">+</div>
+        </nav>
+
+        <!-- Sidebar de Canais -->
+        <aside class="channel-sidebar">
+            <div class="user-profile" id="my-profile">
+                <img src="https://via.placeholder.com/40" alt="Avatar" id="my-avatar">
+                <div class="user-info">
+                    <span id="my-name" style="font-family: 'Roboto', sans-serif;">Carregando...</span>
+                    <small id="my-status">Online</small>
+                </div>
+                <button id="edit-profile-btn">⚙️</button>
+            </div>
+            <div class="channels">
+                <h3>Texto</h3>
+                <div class="channel active"># geral</div>
+                <div class="channel"># memes</div>
+                <h3>Voz</h3>
+                <div class="channel">🔊 Call Geral</div>
+            </div>
+        </aside>
+
+        <!-- Área Principal de Chat -->
+        <main class="chat-area">
+            <header class="chat-header">
+                <h2># geral</h2>
+                <div class="header-actions">
+                    <button id="start-call">📞 Chamada</button>
+                    <button id="start-video">📹 Vídeo</button>
+                </div>
+            </header>
+            
+            <div class="messages" id="messages-container">
+                <!-- As mensagens aparecerão aqui -->
+            </div>
+
+            <div class="chat-input-area">
+                <input type="text" id="message-input" placeholder="Conversar em #geral" autocomplete="off">
+                <button id="send-btn">Enviar</button>
+            </div>
+        </main>
+    </div>
+
+    <!-- Modal de Edição de Perfil -->
+    <div id="profile-modal" class="modal hidden">
+        <div class="modal-content">
+            <h2>Editar Perfil</h2>
+            <label>Nome:</label>
+            <input type="text" id="edit-name">
+            
+            <label>Bio:</label>
+            <textarea id="edit-bio"></textarea>
+
+            <label>Link:</label>
+            <input type="url" id="edit-link" placeholder="https://...">
+            
+            <label>Fonte do Nick:</label>
+            <select id="edit-font">
+                <option value="'Roboto', sans-serif">Padrão</option>
+                <option value="'Press Start 2P', cursive">Gamer</option>
+                <option value="'Pacifico', cursive">Cursiva</option>
+            </select>
+
+            <label>Avatar (Imagem Base64):</label>
+            <input type="file" id="edit-avatar" accept="image/*">
+
+            <div class="modal-buttons">
+                <button id="save-profile">Salvar</button>
+                <button id="close-modal">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Firebase SDK -->
+    <script type="module" src="app.js"></script>
+</body>
+</html>
