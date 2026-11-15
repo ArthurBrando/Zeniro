@@ -14,7 +14,7 @@
             <svg viewBox="0 0 24 24" width="28" height="28" fill="#fff"><path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"/></svg>
         </button>
 
-        <!-- Fundo escuro para o menu mobile -->
+        <!-- Fundo escuro para fechar o menu mobile -->
         <div id="sidebar-backdrop" class="hidden"></div>
 
         <!-- Sidebar de Servidores -->
@@ -51,7 +51,7 @@
                         <span id="my-name">...</span>
                     </div>
                 </div>
-                <button class="icon-btn" id="edit-profile-btn">
+                <button class="icon-btn" id="edit-profile-btn" title="Editar Perfil">
                     <svg viewBox="0 0 24 24" width="20" height="20" fill="#fff"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>
                 </button>
             </div>
@@ -68,11 +68,9 @@
             </header>
             
             <div class="messages" id="messages-container">
-                <!-- Fundo Zeniro -->
                 <div class="empty-bg" id="empty-bg"><img src="zenirobg.png" alt="Zeniro Logo"></div>
             </div>
 
-            <!-- Área de Input -->
             <div class="chat-input-wrapper">
                 <div id="reply-context" class="hidden">
                     <div class="reply-info">
@@ -83,11 +81,11 @@
                 </div>
 
                 <div class="chat-input-area">
-                    <button id="plus-btn" class="icon-btn"><svg viewBox="0 0 24 24" width="24" height="24" fill="#b9bbbe"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg></button>
+                    <button id="plus-btn" class="icon-btn" title="Enviar Imagem"><svg viewBox="0 0 24 24" width="24" height="24" fill="#b9bbbe"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg></button>
                     <input type="file" id="image-upload" accept="image/*" class="hidden">
                     
-                    <button id="emoji-btn" class="icon-btn"><svg viewBox="0 0 24 24" width="24" height="24" fill="#b9bbbe"><path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm3.5-9c.83 0 1.5-.67 1.5-1.5S16.33 8 15.5 8 14 8.67 14 9.5s.67 1.5 1.5 1.5zm-7 0c.83 0 1.5-.67 1.5-1.5S9.33 8 8.5 8 7 8.67 7 9.5 7.67 11 8.5 11zm3.5 6.5c2.33 0 4.31-1.46 5.11-3.5H6.89c.8 2.04 2.78 3.5 5.11 3.5z"/></svg></button>
-                    <button id="gif-btn" class="icon-btn" style="font-weight:bold;font-size:12px;color:#b9bbbe;">GIF</button>
+                    <button id="emoji-btn" class="icon-btn" title="Emojis"><svg viewBox="0 0 24 24" width="24" height="24" fill="#b9bbbe"><path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm3.5-9c.83 0 1.5-.67 1.5-1.5S16.33 8 15.5 8 14 8.67 14 9.5s.67 1.5 1.5 1.5zm-7 0c.83 0 1.5-.67 1.5-1.5S9.33 8 8.5 8 7 8.67 7 9.5 7.67 11 8.5 11zm3.5 6.5c2.33 0 4.31-1.46 5.11-3.5H6.89c.8 2.04 2.78 3.5 5.11 3.5z"/></svg></button>
+                    <button id="gif-btn" class="icon-btn" style="font-weight:bold;font-size:12px;color:#b9bbbe;" title="GIFs">GIF</button>
                     
                     <input type="text" id="message-input" placeholder="Conversar..." autocomplete="off">
                     <button id="send-btn" class="icon-btn"><svg viewBox="0 0 24 24" width="24" height="24" fill="#5865F2"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg></button>
@@ -96,28 +94,26 @@
         </main>
     </div>
 
-    <!-- MODAL: VISUALIZAR / EDITAR PERFIL (COM PREVIEW EM TEMPO REAL) -->
+    <!-- MODAL: EDITAR PERFIL -->
     <div id="profile-modal" class="modal hidden">
         <div class="modal-content profile-edit-container">
             <h2>Editar Perfil</h2>
-            
-            <div class="profile-preview" id="live-preview">
+            <div class="profile-preview">
                 <div class="preview-banner" id="preview-banner"></div>
-                <img id="preview-avatar" src="" alt="Avatar">
+                <img id="preview-avatar" src="zenirobg.png" alt="Avatar">
                 <h3 id="preview-name">Seu Nome</h3>
                 <p id="preview-bio">Sua bio aqui...</p>
             </div>
-
             <div class="input-group">
                 <label>Nome</label>
                 <input type="text" id="edit-name" oninput="updatePreview()">
             </div>
             <div class="input-group">
                 <label>Bio</label>
-                <textarea id="edit-bio" oninput="updatePreview()"></textarea>
+                <textarea id="edit-bio" rows="2" oninput="updatePreview()"></textarea>
             </div>
             <div class="input-group">
-                <label>Fonte</label>
+                <label>Fonte do Nome</label>
                 <select id="edit-font" onchange="updatePreview()">
                     <option value="'Inter', sans-serif">Padrão</option>
                     <option value="'Press Start 2P', cursive">Retro Gamer</option>
@@ -135,10 +131,9 @@
                 <input type="text" id="edit-banner-url" placeholder="https://..." oninput="updatePreview()">
             </div>
             <div class="input-group">
-                <label>Ou envie uma foto (Base64)</label>
+                <label>Ou Upload de Foto</label>
                 <input type="file" id="edit-avatar-file" accept="image/*">
             </div>
-
             <div class="modal-actions">
                 <button class="secondary-btn close-modal">Cancelar</button>
                 <button class="primary-btn" id="save-profile">Salvar</button>
@@ -169,21 +164,12 @@
         <video id="local-video" autoplay muted></video>
         
         <div class="call-controls">
-            <button id="toggle-mic" class="call-ctrl-btn active" title="Mudo">
-                <svg viewBox="0 0 24 24" width="24" height="24" fill="#fff"><path d="M12 14c1.66 0 2.99-1.34 2.99-3L15 5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm5.3-3c0 3-2.54 5.1-5.3 5.1S6.7 14 6.7 11H5c0 3.41 2.72 6.23 6 6.72V21h2v-3.28c3.28-.48 6-3.3 6-6.72h-1.7z"/></svg>
-            </button>
-            <button id="call-settings-btn" class="call-ctrl-btn" title="Configurações">
-                <svg viewBox="0 0 24 24" width="24" height="24" fill="#fff"><path d="M19.14,12.94c0.04-0.3,0.06-0.61,0.06-0.94c0-0.32-0.02-0.64-0.06-0.94l2.03-1.58c0.18-0.14,0.23-0.41,0.12-0.61 l-1.92-3.32c-0.12-0.22-0.37-0.29-0.59-0.22l-2.39,0.96c-0.5-0.38-1.03-0.7-1.62-0.94L14.4,2.81c-0.04-0.24-0.24-0.41-0.48-0.41 h-3.84c-0.24,0-0.43,0.17-0.47,0.41L9.25,5.35C8.66,5.59,8.12,5.92,7.63,6.29L5.24,5.33c-0.22-0.08-0.47,0-0.59,0.22L2.73,8.87 C2.62,9.08,2.66,9.34,2.86,9.48l2.03,1.58C4.84,11.36,4.8,11.69,4.8,12s0.02,0.64,0.06,0.94l-2.03,1.58 c-0.18,0.14-0.23,0.41-0.12,0.61l1.92,3.32c0.12,0.22,0.37,0.29,0.59,0.22l2.39-0.96c0.5,0.38,1.03,0.7,1.62,0.94l0.36,2.54 c0.05,0.24,0.24,0.41,0.48,0.41h3.84c0.24,0,0.44-0.17,0.47-0.41l0.36-2.54c0.59-0.24,1.13-0.56,1.62-0.94l2.39,0.96 c0.22,0.08,0.47,0,0.59-0.22l1.92-3.32c0.12-0.22,0.07-0.47-0.12-0.61L19.14,12.94z M12,15.6c-1.98,0-3.6-1.62-3.6-3.6 s1.62-3.6,3.6-3.6s3.6,1.62,3.6,3.6S13.98,15.6,12,15.6z"/></svg>
-            </button>
-            <button id="end-call" class="call-ctrl-btn danger">
-                <svg viewBox="0 0 24 24" width="24" height="24" fill="#fff"><path d="M12 9c-1.6 0-3.15.25-4.6.72v3.1c0 .39-.23.74-.56.9-.98.49-1.87 1.12-2.66 1.85-.18.18-.43.28-.7.28-.28 0-.53-.11-.71-.29L.29 13.08c-.18-.17-.29-.42-.29-.7 0-.28.11-.53.29-.71C3.34 8.78 7.46 7 12 7s8.66 1.78 11.71 4.67c.18.18.29.43.29.71 0 .28-.11.53-.29.7l-2.48 2.48c-.18.18-.43.29-.71.29-.27 0-.52-.1-.7-.28-.79-.73-1.68-1.36-2.66-1.85-.33-.16-.56-.51-.56-.9v-3.1C15.15 9.25 13.6 9 12 9z"/></svg>
-            </button>
-            <button id="toggle-video" class="call-ctrl-btn active" title="Câmera">
-                <svg viewBox="0 0 24 24" width="24" height="24" fill="#fff"><path d="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z"/></svg>
-            </button>
+            <button id="toggle-mic" class="call-ctrl-btn active" title="Mudo"><svg viewBox="0 0 24 24" width="24" height="24" fill="#fff"><path d="M12 14c1.66 0 2.99-1.34 2.99-3L15 5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm5.3-3c0 3-2.54 5.1-5.3 5.1S6.7 14 6.7 11H5c0 3.41 2.72 6.23 6 6.72V21h2v-3.28c3.28-.48 6-3.3 6-6.72h-1.7z"/></svg></button>
+            <button id="call-settings-btn" class="call-ctrl-btn" title="Configurações"><svg viewBox="0 0 24 24" width="24" height="24" fill="#fff"><path d="M19.14,12.94c0.04-0.3,0.06-0.61,0.06-0.94c0-0.32-0.02-0.64-0.06-0.94l2.03-1.58c0.18-0.14,0.23-0.41,0.12-0.61 l-1.92-3.32c-0.12-0.22-0.37-0.29-0.59-0.22l-2.39,0.96c-0.5-0.38-1.03-0.7-1.62-0.94L14.4,2.81c-0.04-0.24-0.24-0.41-0.48-0.41 h-3.84c-0.24,0-0.43,0.17-0.47,0.41L9.25,5.35C8.66,5.59,8.12,5.92,7.63,6.29L5.24,5.33c-0.22-0.08-0.47,0-0.59,0.22L2.73,8.87 C2.62,9.08,2.66,9.34,2.86,9.48l2.03,1.58C4.84,11.36,4.8,11.69,4.8,12s0.02,0.64,0.06,0.94l-2.03,1.58 c-0.18,0.14-0.23,0.41-0.12,0.61l1.92,3.32c0.12,0.22,0.37,0.29,0.59,0.22l2.39-0.96c0.5,0.38,1.03,0.7,1.62,0.94l0.36,2.54 c0.05,0.24,0.24,0.41,0.48,0.41h3.84c0.24,0,0.44-0.17,0.47-0.41l0.36-2.54c0.59-0.24,1.13-0.56,1.62-0.94l2.39,0.96 c0.22,0.08,0.47,0,0.59-0.22l1.92-3.32c0.12-0.22,0.07-0.47-0.12-0.61L19.14,12.94z M12,15.6c-1.98,0-3.6-1.62-3.6-3.6 s1.62-3.6,3.6-3.6s3.6,1.62,3.6,3.6S13.98,15.6,12,15.6z"/></svg></button>
+            <button id="end-call" class="call-ctrl-btn danger"><svg viewBox="0 0 24 24" width="24" height="24" fill="#fff"><path d="M12 9c-1.6 0-3.15.25-4.6.72v3.1c0 .39-.23.74-.56.9-.98.49-1.87 1.12-2.66 1.85-.18.18-.43.28-.7.28-.28 0-.53-.11-.71-.29L.29 13.08c-.18-.17-.29-.42-.29-.7 0-.28.11-.53.29-.71C3.34 8.78 7.46 7 12 7s8.66 1.78 11.71 4.67c.18.18.29.43.29.71 0 .28-.11.53-.29.7l-2.48 2.48c-.18.18-.43.29-.71.29-.27 0-.52-.1-.7-.28-.79-.73-1.68-1.36-2.66-1.85-.33-.16-.56-.51-.56-.9v-3.1C15.15 9.25 13.6 9 12 9z"/></svg></button>
+            <button id="toggle-video" class="call-ctrl-btn active" title="Câmera"><svg viewBox="0 0 24 24" width="24" height="24" fill="#fff"><path d="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z"/></svg></button>
         </div>
 
-        <!-- Painel de Configurações de Call -->
         <div id="call-settings-panel" class="hidden">
             <h3>Dispositivos</h3>
             <label>Microfone</label>
@@ -194,7 +180,7 @@
         </div>
     </div>
 
-    <!-- PAINEL DE EMOJIS (MUITOS) -->
+    <!-- PAINEL DE EMOJIS -->
     <div id="emoji-picker" class="picker-panel hidden">
         <input type="text" id="emoji-search" placeholder="Pesquisar emoji...">
         <div id="emoji-list" class="emoji-grid"></div>
@@ -202,11 +188,11 @@
 
     <!-- PAINEL DE GIFS -->
     <div id="gif-picker" class="picker-panel hidden">
-        <input type="text" id="gif-search" placeholder="Pesquisar GIFs (Tenor)...">
+        <input type="text" id="gif-search" placeholder="Pesquisar GIFs (Aperte Enter)...">
         <div id="gif-list" class="gif-grid"></div>
     </div>
 
-    <!-- VISUALIZADOR DE IMAGEM EM TELA CHEIA -->
+    <!-- VISUALIZADOR DE IMAGEM -->
     <div id="image-viewer" class="modal hidden">
         <div class="image-viewer-content">
             <img id="viewer-img" src="" alt="Imagem">
@@ -217,9 +203,10 @@
         </div>
     </div>
 
-    <!-- CANVAS OCULTO PARA REDIMENSIONAR IMAGENS -->
+    <!-- CANVAS OCULTO -->
     <canvas id="resize-canvas" class="hidden"></canvas>
 
+    <!-- SCRIPTS -->
     <script type="module" src="app.js"></script>
 </body>
-                    </html>
+</html>
