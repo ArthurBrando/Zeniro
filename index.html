@@ -5,10 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Zeniro</title>
     <link rel="stylesheet" href="style.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Press+Start+2P&family=Pacifico&family=Caveat:wght@700&family=Oswald:wght@500&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Press+Start+2P&family=Pacifico&family=Caveat:wght@700&display=swap" rel="stylesheet">
 </head>
 <body>
     <div class="app-container">
+        <!-- Botão de Menu Mobile -->
         <button id="mobile-menu-btn" class="icon-btn mobile-only">
             <svg viewBox="0 0 24 24" width="28" height="28" fill="#fff"><path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"/></svg>
         </button>
@@ -16,59 +17,55 @@
 
         <!-- Sidebar de Servidores -->
         <nav class="server-sidebar" id="server-sidebar">
-            <div class="server-icon active" data-server="global" title="Início">
-                <svg viewBox="0 0 24 24" width="24" height="24" fill="#fff"><path d="M12 2L2 22h20L12 2zm0 3.8l7.5 14.2H4.5L12 5.8z"/></svg>
+            <!-- Botão de DM (Home) -->
+            <div class="server-icon active" id="btn-dm-home" title="Mensagens Diretas">
+                <svg viewBox="0 0 24 24" width="24" height="24" fill="#fff"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z"/></svg>
             </div>
+            <div class="separator"></div>
             <div id="server-list" class="server-list"></div>
             <button class="server-icon add-btn" id="create-server-btn" title="Criar Servidor">
                 <svg viewBox="0 0 24 24" width="24" height="24" fill="#fff"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
-            </button>
-            <button class="server-icon search-btn" id="search-server-btn" title="Descobrir">
-                <svg viewBox="0 0 24 24" width="24" height="24" fill="#fff"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
             </button>
         </nav>
 
         <!-- Sidebar de Canais -->
         <aside class="channel-sidebar" id="channel-sidebar">
             <div class="server-header">
-                <span id="current-server-name">Início</span>
-                <div style="display:flex; gap:8px;">
-                    <button id="add-channel-btn" class="icon-btn hidden" title="Criar Canal">
-                        <svg viewBox="0 0 24 24" width="18" height="18" fill="#fff"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
-                    </button>
-                    <button id="open-mailbox-btn" class="icon-btn" title="Pedidos de Amizade">
-                        <svg viewBox="0 0 24 24" width="18" height="18" fill="#fff"><path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/></svg>
-                    </button>
-                </div>
+                <span id="current-server-name">Mensagens Diretas</span>
+                <button id="add-channel-btn" class="icon-btn hidden" title="Criar Canal">
+                    <svg viewBox="0 0 24 24" width="18" height="18" fill="#fff"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
+                </button>
             </div>
-            <div class="channels" id="channel-list">
-                <!-- Canais serão injetados aqui -->
-            </div>
+            <div class="channels" id="channel-list"></div>
             <div class="user-panel">
-                <div class="user-info" id="open-profile-btn">
+                <div class="user-info" onclick="openProfileView('my_id')">
                     <div class="avatar-wrapper">
                         <img src="zenirobg.png" id="my-avatar" class="user-avatar">
                         <img src="" id="my-decoration" class="decoration hidden">
                     </div>
                     <div class="user-details">
-                        <span id="my-name">...</span>
-                        <span id="my-tag" class="tag-badge hidden"><img id="tag-icon" class="hidden"><span id="tag-text"></span></span>
+                        <span id="my-name">Carregando...</span>
+                        <small id="my-status">Online</small>
                     </div>
                 </div>
-                <button class="icon-btn" id="edit-profile-btn">
-                    <svg viewBox="0 0 24 24" width="20" height="20" fill="#fff"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>
+                <button class="icon-btn" onclick="document.getElementById('settings-modal').classList.remove('hidden')">
+                    <svg viewBox="0 0 24 24" width="20" height="20" fill="#b9bbbe"><path d="M19.14,12.94c0.04-0.3,0.06-0.61,0.06-0.94c0-0.32-0.02-0.64-0.06-0.94l2.03-1.58c0.18-0.14,0.23-0.41,0.12-0.61 l-1.92-3.32c-0.12-0.22-0.37-0.29-0.59-0.22l-2.39,0.96c-0.5-0.38-1.03-0.7-1.62-0.94L14.4,2.81c-0.04-0.24-0.24-0.41-0.48-0.41 h-3.84c-0.24,0-0.43,0.17-0.47,0.41L9.25,5.35C8.66,5.59,8.12,5.92,7.63,6.29L5.24,5.33c-0.22-0.08-0.47,0-0.59,0.22L2.73,8.87 C2.62,9.08,2.66,9.34,2.86,9.48l2.03,1.58C4.84,11.36,4.8,11.69,4.8,12s0.02,0.64,0.06,0.94l-2.03,1.58 c-0.18,0.14-0.23,0.41-0.12,0.61l1.92,3.32c0.12,0.22,0.37,0.29,0.59,0.22l2.39-0.96c0.5,0.38,1.03,0.7,1.62,0.94l0.36,2.54 c0.05,0.24,0.24,0.41,0.48,0.41h3.84c0.24,0,0.44-0.17,0.47-0.41l0.36-2.54c0.59-0.24,1.13-0.56,1.62-0.94l2.39,0.96 c0.22,0.08,0.47,0,0.59-0.22l1.92-3.32c0.12-0.22,0.07-0.47-0.12-0.61L19.14,12.94z M12,15.6c-1.98,0-3.6-1.62-3.6-3.6 s1.62-3.6,3.6-3.6s3.6,1.62,3.6,3.6S13.98,15.6,12,15.6z"/></svg>
                 </button>
             </div>
         </aside>
 
-        <!-- Chat -->
+        <!-- Área Principal -->
         <main class="chat-area" id="chat-area">
             <header class="chat-header">
-                <h2 id="current-channel-name"># geral</h2>
+                <div class="chat-header-left">
+                    <button class="icon-btn mobile-only" id="mobile-back-btn">
+                        <svg viewBox="0 0 24 24" width="24" height="24" fill="#b9bbbe"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>
+                    </button>
+                    <h2 id="current-channel-name"># boas-vindas</h2>
+                </div>
                 <div class="call-actions">
-                    <!-- Ícone de Call Simples (Telefone) -->
-                    <button id="start-audio-call" class="icon-btn"><svg viewBox="0 0 24 24" width="22" height="22" fill="#fff"><path d="M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z"/></svg></button>
-                    <button id="start-video-call" class="icon-btn"><svg viewBox="0 0 24 24" width="22" height="22" fill="#fff"><path d="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z"/></svg></button>
+                    <button id="start-audio-call" class="icon-btn"><svg viewBox="0 0 24 24" width="22" height="22" fill="#b9bbbe"><path d="M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z"/></svg></button>
+                    <button id="start-video-call" class="icon-btn"><svg viewBox="0 0 24 24" width="22" height="22" fill="#b9bbbe"><path d="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z"/></svg></button>
                 </div>
             </header>
             
@@ -87,227 +84,137 @@
                     <button id="plus-btn" class="icon-btn"><svg viewBox="0 0 24 24" width="24" height="24" fill="#b9bbbe"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg></button>
                     <input type="file" id="image-upload" accept="image/*,image/gif" class="hidden">
                     
-                    <button id="emoji-btn" class="icon-btn"><svg viewBox="0 0 24 24" width="24" height="24" fill="#b9bbbe"><path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm3.5-9c.83 0 1.5-.67 1.5-1.5S16.33 8 15.5 8 14 8.67 14 9.5s.67 1.5 1.5 1.5zm-7 0c.83 0 1.5-.67 1.5-1.5S9.33 8 8.5 8 7 8.67 7 9.5 7.67 11 8.5 11zm3.5 6.5c2.33 0 4.31-1.46 5.11-3.5H6.89c.8 2.04 2.78 3.5 5.11 3.5z"/></svg></button>
-                    <button id="gif-btn" class="icon-btn" style="font-weight:bold;font-size:12px;color:#b9bbbe;">GIF</button>
+                    <input type="text" id="message-input" placeholder="Conversar em #..." autocomplete="off">
                     
-                    <input type="text" id="message-input" placeholder="Conversar..." autocomplete="off">
-                    <button id="send-btn" class="icon-btn"><svg viewBox="0 0 24 24" width="24" height="24" fill="#fff"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg></button>
+                    <button id="gif-btn" class="icon-btn"><svg viewBox="0 0 24 24" width="24" height="24" fill="#b9bbbe"><path d="M11.5 9H13v6h-1.5V9zM9 9H6c-.6 0-1 .5-1 1v4c0 .5.4 1 1 1h3c.6 0 1-.5 1-1v-2H8.5v1.5h-2v-3H10V10c0-.5-.4-1-1-1zm10 1V9h-4.5v6H16v-2h2v-1.5h-2v-1h3z"/></svg></button>
+                    <button id="emoji-btn" class="icon-btn"><svg viewBox="0 0 24 24" width="24" height="24" fill="#b9bbbe"><path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm3.5-9c.83 0 1.5-.67 1.5-1.5S16.33 8 15.5 8 14 8.67 14 9.5s.67 1.5 1.5 1.5zm-7 0c.83 0 1.5-.67 1.5-1.5S9.33 8 8.5 8 7 8.67 7 9.5 7.67 11 8.5 11zm3.5 6.5c2.33 0 4.31-1.46 5.11-3.5H6.89c.8 2.04 2.78 3.5 5.11 3.5z"/></svg></button>
                 </div>
             </div>
         </main>
     </div>
 
-    <!-- MENU DE CONTEXTO (LONG PRESS) -->
+    <!-- MENU DE CONTEXTO -->
     <div id="context-menu" class="context-menu hidden">
         <button id="ctx-reply">Responder</button>
         <button id="ctx-delete" class="danger-text hidden">Apagar Mensagem</button>
     </div>
 
-    <!-- MODAL: VER PERFIL DE OUTRO USUÁRIO -->
-    <div id="view-profile-modal" class="modal hidden">
-        <div class="modal-content profile-view-container">
-            <button class="icon-btn close-modal" style="position:absolute;top:10px;right:10px;z-index:10"><svg viewBox="0 0 24 24" width="24" height="24" fill="#fff"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg></button>
-            <div class="profile-banner" id="v-banner"></div>
-            <div class="avatar-wrapper" style="margin: -40px 0 0 20px; width: 80px; height: 80px;">
-                <img id="v-avatar" class="user-avatar" src="" style="width:100%;height:100%;">
-                <img id="v-decoration" class="decoration hidden" style="width:100%;height:100%;">
+    <!-- TELA DE PERFIL (Estilo do Print) -->
+    <div id="profile-view" class="mobile-page hidden">
+        <header class="chat-header" style="justify-content: space-between;">
+            <div class="chat-header-left">
+                <button class="icon-btn" onclick="document.getElementById('profile-view').classList.add('hidden')">
+                    <svg viewBox="0 0 24 24" width="24" height="24" fill="#b9bbbe"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>
+                </button>
+                <h2 id="p-view-channel" style="font-size:16px;"># boas-vindas</h2>
             </div>
-            <div style="padding: 16px;">
-                <div style="display:flex; align-items:center; gap:8px;">
-                    <h2 id="v-name" style="margin:0;"></h2>
+            <div class="icon-btn"><svg viewBox="0 0 24 24" width="24" height="24" fill="#b9bbbe"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg></div>
+        </header>
+
+        <div class="profile-scroll-area">
+            <!-- Banner -->
+            <div class="profile-banner" id="v-banner"></div>
+            
+            <!-- Avatar e Botões -->
+            <div class="profile-top-actions">
+                <div class="avatar-wrapper profile-avatar-large">
+                    <img id="v-avatar" class="user-avatar" src="zenirobg.png">
+                    <img id="v-decoration" class="decoration hidden">
+                </div>
+                <div class="profile-action-buttons">
+                    <button class="icon-btn bg-dark"><svg viewBox="0 0 24 24" width="20" height="20" fill="#fff"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg></button>
+                    <button class="icon-btn bg-dark"><svg viewBox="0 0 24 24" width="20" height="20" fill="#fff"><path d="M6 10c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm12 0c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm-6 0c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/></svg></button>
+                </div>
+            </div>
+
+            <!-- Informações do Perfil -->
+            <div class="profile-info-container">
+                <h1 id="v-name" class="profile-name">Carregando...</h1>
+                <div class="profile-username-row">
+                    <span id="v-username">null_kill</span>
                     <span id="v-tag" class="tag-badge hidden"><img id="v-tag-icon" class="hidden"><span id="v-tag-text"></span></span>
                 </div>
-                <p id="v-bio" class="profile-bio"></p>
-                <button id="add-friend-btn" class="primary-btn" style="margin-top:16px; width:100%;">Adicionar Amigo</button>
+                
+                <div class="mutual-servers">
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="#b9bbbe"><path d="M21 11l-2.5-2.5-1.41 1.41L19 12H5l1.91-1.91L5.5 8.5 3 11v2l2.5 2.5 1.41-1.41L5 12h14l-1.91 1.91 1.41 1.41L21 13v-2z"/></svg>
+                    <span>2 servidores mútuos</span>
+                </div>
+
+                <!-- Botões Principais (Mensagem / Editar) -->
+                <div class="main-profile-buttons" id="profile-main-buttons">
+                    <!-- Injetado via JS -->
+                </div>
+
+                <!-- Tabs -->
+                <div class="profile-tabs">
+                    <div class="tab active">Principal</div>
+                    <div class="tab">Atividade</div>
+                    <div class="tab">Lista de desejos</div>
+                </div>
+
+                <!-- Bio e Detalhes -->
+                <div class="profile-section">
+                    <h3>Bio</h3>
+                    <p id="v-bio">Sem bio.</p>
+                </div>
+
+                <div class="profile-section">
+                    <h3>Membro desde</h3>
+                    <p id="v-joined">16 de jan. de 2024</p>
+                </div>
+
+                <div class="profile-section">
+                    <h3>Cargos</h3>
+                    <div class="roles-container">
+                        <span class="role-badge" style="border-left: 3px solid #fff; background: #333;">DONO</span>
+                        <span class="role-badge" style="border-left: 3px solid #ff0000; background: #333;">Z1Z</span>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 
-    <!-- MODAL: EDITAR PERFIL COMPLETO -->
-    <div id="profile-modal" class="modal hidden">
+    <!-- MODAL DE EDIÇÃO DE PERFIL -->
+    <div id="edit-profile-modal" class="modal hidden">
         <div class="modal-content">
             <h2>Editar Perfil</h2>
-            
-            <div class="profile-preview" id="live-preview">
-                <div class="preview-banner" id="preview-banner"></div>
-                <div class="avatar-wrapper" style="margin: -32px 0 0 16px; width: 64px; height: 64px;">
-                    <img id="preview-avatar" class="user-avatar" src="zenirobg.png" style="width:100%;height:100%;">
-                    <img id="preview-decoration" class="decoration hidden" style="width:100%;height:100%;">
-                </div>
-                <div style="padding: 8px 16px;">
-                    <h3 id="preview-name" style="margin:0; font-size:18px;">Seu Nome</h3>
-                    <span id="preview-tag" class="tag-badge hidden"><img id="preview-tag-icon" class="hidden"><span id="preview-tag-text"></span></span>
-                </div>
-            </div>
-
-            <div class="input-group">
-                <label>Nome</label>
-                <input type="text" id="edit-name" oninput="updatePreview()">
-            </div>
-            <div class="input-group">
-                <label>Bio</label>
-                <textarea id="edit-bio" rows="2" oninput="updatePreview()"></textarea>
-            </div>
-            <div class="input-group">
-                <label>Fonte</label>
-                <select id="edit-font" onchange="updatePreview()">
+            <div class="input-group"><label>Nome</label><input type="text" id="edit-name"></div>
+            <div class="input-group"><label>Bio</label><textarea id="edit-bio" rows="3"></textarea></div>
+            <div class="input-group"><label>Fonte do Nome</label>
+                <select id="edit-font">
                     <option value="'Inter', sans-serif">Padrão</option>
                     <option value="'Press Start 2P', cursive">Retro</option>
                     <option value="'Pacifico', cursive">Caligráfica</option>
-                    <option value="'Caveat', cursive">Manuscrita</option>
                 </select>
             </div>
-            <div class="input-group">
-                <label>Avatar (URL)</label>
-                <input type="text" id="edit-avatar-url" placeholder="https://..." oninput="updatePreview()">
-            </div>
-            <label class="custom-file-upload">
-                Upload de Avatar
-                <input type="file" id="edit-avatar-file" accept="image/*">
-            </label>
+            <div class="input-group"><label>Avatar (URL)</label><input type="text" id="edit-avatar-url"></div>
+            <label class="custom-file-upload">Upload Avatar <input type="file" id="edit-avatar-file" accept="image/*"></label>
+            
+            <div class="input-group"><label>Banner (URL)</label><input type="text" id="edit-banner-url"></div>
+            <label class="custom-file-upload">Upload Banner <input type="file" id="edit-banner-file" accept="image/*"></label>
+            
+            <div class="input-group"><label>Moldura / Decoração (URL)</label><input type="text" id="edit-decor-url"></div>
+            <label class="custom-file-upload">Upload Moldura <input type="file" id="edit-decor-file" accept="image/*"></label>
 
-            <div class="input-group">
-                <label>Banner (URL)</label>
-                <input type="text" id="edit-banner-url" placeholder="https://..." oninput="updatePreview()">
-            </div>
-            <label class="custom-file-upload">
-                Upload de Banner
-                <input type="file" id="edit-banner-file" accept="image/*">
-            </label>
-
-            <div class="input-group">
-                <label>Decoração (URL)</label>
-                <input type="text" id="edit-decor-url" placeholder="https://..." oninput="updatePreview()">
-            </div>
-            <label class="custom-file-upload">
-                Upload de Decoração
-                <input type="file" id="edit-decor-file" accept="image/*">
-            </label>
-
-            <div class="input-group">
-                <label>Fundo do Perfil</label>
-                <select id="edit-bg-type" onchange="updatePreview()">
-                    <option value="solid">Cor Sólida</option>
-                    <option value="grad-down">Gradiente (Baixo)</option>
-                    <option value="grad-up">Gradiente (Cima)</option>
-                    <option value="rainbow">Borda RGB Rainbow</option>
-                    <option value="animated">Cores Animadas</option>
-                </select>
-            </div>
-            <div class="input-group">
-                <label>Cor do Fundo</label>
-                <input type="color" id="edit-bg-color" value="#1e1f22" oninput="updatePreview()">
-            </div>
-
-            <div class="input-group">
-                <label>Tag de Texto</label>
-                <input type="text" id="edit-tag-text" placeholder="Ex: VIP" oninput="updatePreview()">
-            </div>
-            <label class="custom-file-upload">
-                Ícone da Tag
-                <input type="file" id="edit-tag-icon" accept="image/*">
-            </label>
+            <div class="input-group"><label>Tag</label><input type="text" id="edit-tag-text" placeholder="Ex: VIP"></div>
 
             <div class="modal-actions">
-                <button class="secondary-btn close-modal">Cancelar</button>
+                <button class="secondary-btn" onclick="document.getElementById('edit-profile-modal').classList.add('hidden')">Cancelar</button>
                 <button class="primary-btn" id="save-profile">Salvar</button>
             </div>
         </div>
     </div>
 
-    <!-- MODAL: BUSCAR SERVIDORES -->
-    <div id="search-server-modal" class="modal hidden">
+    <!-- MODAL DE CONFIGURAÇÕES -->
+    <div id="settings-modal" class="modal hidden">
         <div class="modal-content">
-            <h2>Descobrir Servidores</h2>
-            <div class="search-bar-container">
-                <svg viewBox="0 0 24 24" width="20" height="20" fill="#949ba4"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
-                <input type="text" id="search-server-input" placeholder="Pesquisar servidores públicos...">
-            </div>
-            <div id="search-results" class="search-results"></div>
-            <div class="modal-actions">
-                <button class="secondary-btn close-search-modal">Fechar</button>
-            </div>
+            <h2>Configurações</h2>
+            <button class="primary-btn" style="margin-top:10px; text-align:left; padding:12px;" onclick="document.getElementById('settings-modal').classList.add('hidden'); document.getElementById('edit-profile-modal').classList.remove('hidden');">Editar Perfil Principal</button>
+            <button class="secondary-btn" style="margin-top:10px; text-align:left; padding:12px;" onclick="document.getElementById('settings-modal').classList.add('hidden')">Fechar</button>
         </div>
     </div>
 
-    <!-- MODAL: CAIXA DE CORREIO (AMIGOS) -->
-    <div id="mailbox-modal" class="modal hidden">
-        <div class="modal-content">
-            <h2>Pedidos de Amizade</h2>
-            <div id="friend-requests-list" class="search-results"></div>
-            <div class="modal-actions">
-                <button class="secondary-btn close-mailbox-modal">Fechar</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- MODAL: CRIAR CANAL -->
-    <div id="channel-modal" class="modal hidden">
-        <div class="modal-content">
-            <h2>Criar Canal</h2>
-            <div class="input-group">
-                <label>Nome do Canal</label>
-                <input type="text" id="channel-name-input">
-            </div>
-            <div class="input-group">
-                <label>Tipo</label>
-                <select id="channel-type-input">
-                    <option value="text">Texto</option>
-                    <option value="voice">Voz</option>
-                    <option value="category">Categoria (Texto)</option>
-                    <option value="category-voice">Categoria (Voz)</option>
-                </select>
-            </div>
-            <div class="modal-actions">
-                <button class="secondary-btn close-channel-modal">Cancelar</button>
-                <button class="primary-btn" id="save-channel-btn">Criar</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- PAINEL DE EMOJIS -->
-    <div id="emoji-picker" class="picker-panel hidden">
-        <div id="emoji-categories" class="emoji-cats"></div>
-        <div id="emoji-list" class="emoji-grid"></div>
-    </div>
-
-    <!-- PAINEL DE GIFS -->
-    <div id="gif-picker" class="picker-panel hidden">
-        <div class="search-bar-container" style="margin-bottom:8px;">
-            <input type="text" id="gif-search" placeholder="Pesquisar GIFs (Aperte Enter)...">
-        </div>
-        <div id="gif-list" class="gif-grid"></div>
-    </div>
-
-    <!-- VISUALIZADOR DE IMAGEM -->
-    <div id="image-viewer" class="modal hidden">
-        <div class="image-viewer-content">
-            <img id="viewer-img" src="">
-            <div class="viewer-actions">
-                <a id="download-img-btn" class="primary-btn" download="zeniro.png">Baixar Imagem</a>
-                <button class="secondary-btn" onclick="document.getElementById('image-viewer').classList.add('hidden')">Fechar</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- TELA DE CHAMADA -->
-    <div id="call-overlay" class="hidden">
-        <video id="remote-video" autoplay></video>
-        <video id="local-video" autoplay muted></video>
-        <div class="call-controls">
-            <button id="toggle-mic" class="call-ctrl-btn active"><svg viewBox="0 0 24 24" width="24" height="24" fill="#fff"><path d="M12 14c1.66 0 2.99-1.34 2.99-3L15 5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm5.3-3c0 3-2.54 5.1-5.3 5.1S6.7 14 6.7 11H5c0 3.41 2.72 6.23 6 6.72V21h2v-3.28c3.28-.48 6-3.3 6-6.72h-1.7z"/></svg></button>
-            <button id="call-settings-btn" class="call-ctrl-btn"><svg viewBox="0 0 24 24" width="24" height="24" fill="#fff"><path d="M19.14,12.94c0.04-0.3,0.06-0.61,0.06-0.94c0-0.32-0.02-0.64-0.06-0.94l2.03-1.58c0.18-0.14,0.23-0.41,0.12-0.61 l-1.92-3.32c-0.12-0.22-0.37-0.29-0.59-0.22l-2.39,0.96c-0.5-0.38-1.03-0.7-1.62-0.94L14.4,2.81c-0.04-0.24-0.24-0.41-0.48-0.41 h-3.84c-0.24,0-0.43,0.17-0.47,0.41L9.25,5.35C8.66,5.59,8.12,5.92,7.63,6.29L5.24,5.33c-0.22-0.08-0.47,0-0.59,0.22L2.73,8.87 C2.62,9.08,2.66,9.34,2.86,9.48l2.03,1.58C4.84,11.36,4.8,11.69,4.8,12s0.02,0.64,0.06,0.94l-2.03,1.58 c-0.18,0.14-0.23,0.41-0.12,0.61l1.92,3.32c0.12,0.22,0.37,0.29,0.59,0.22l2.39-0.96c0.5,0.38,1.03,0.7,1.62,0.94l0.36,2.54 c0.05,0.24,0.24,0.41,0.48,0.41h3.84c0.24,0,0.44-0.17,0.47-0.41l0.36-2.54c0.59-0.24,1.13-0.56,1.62-0.94l2.39,0.96 c0.22,0.08,0.47,0,0.59-0.22l1.92-3.32c0.12-0.22,0.07-0.47-0.12-0.61L19.14,12.94z M12,15.6c-1.98,0-3.6-1.62-3.6-3.6 s1.62-3.6,3.6-3.6s3.6,1.62,3.6,3.6S13.98,15.6,12,15.6z"/></svg></button>
-            <button id="end-call" class="call-ctrl-btn danger"><svg viewBox="0 0 24 24" width="24" height="24" fill="#fff"><path d="M12 9c-1.6 0-3.15.25-4.6.72v3.1c0 .39-.23.74-.56.9-.98.49-1.87 1.12-2.66 1.85-.18.18-.43.28-.7.28-.28 0-.53-.11-.71-.29L.29 13.08c-.18-.17-.29-.42-.29-.7 0-.28.11-.53.29-.71C3.34 8.78 7.46 7 12 7s8.66 1.78 11.71 4.67c.18.18.29.43.29.71 0 .28-.11.53-.29.7l-2.48 2.48c-.18.18-.43.29-.71.29-.27 0-.52-.1-.7-.28-.79-.73-1.68-1.36-2.66-1.85-.33-.16-.56-.51-.56-.9v-3.1C15.15 9.25 13.6 9 12 9z"/></svg></button>
-            <button id="toggle-video" class="call-ctrl-btn active"><svg viewBox="0 0 24 24" width="24" height="24" fill="#fff"><path d="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z"/></svg></button>
-        </div>
-        <div id="call-settings-panel" class="hidden">
-            <h3>Dispositivos</h3>
-            <label>Microfone</label><select id="mic-select"></select>
-            <label>Câmera</label><select id="camera-select"></select>
-            <button class="primary-btn" id="close-call-settings">Fechar</button>
-        </div>
-    </div>
-
+    <!-- CANVAS E SCRIPT -->
     <canvas id="resize-canvas" class="hidden"></canvas>
     <script type="module" src="app.js"></script>
 </body>
