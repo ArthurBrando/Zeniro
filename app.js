@@ -1,5 +1,5 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-import { getDatabase, ref, push, onChildAdded, set, onValue, update, remove, get } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+import { getDatabase, ref, push, onChildAdded, set, onValue, update, remove } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyASxTiAzWJ3TNJ8OZLxNiNR85dbAl68t-U",
@@ -14,28 +14,37 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 
-// ID de Usuário (Simulando Login)
-let userId = localStorage.getItem('zeniro_uid');
-if (!userId) {
-    userId = 'user_' + Math.random().toString(36).substr(2, 9);
-    localStorage.setItem('zeniro_uid', userId);
-}
+// Estado do Usuário
+let userId = localStorage.getItem('zeniro_uid') || 'user_' + Math.random().toString(36).substr(2, 9);
+localStorage.setItem('zeniro_uid', userId);
 
-// Elementos da UI
+// Elementos UI
 const myName = document.getElementById('my-name');
 const myAvatar = document.getElementById('my-avatar');
 const messagesContainer = document.getElementById('messages-container');
 const messageInput = document.getElementById('message-input');
-const profileModal = document.getElementById('profile-modal');
-const serverModal = document.getElementById('server-modal');
-const serverNameInput = document.getElementById('server-name-input');
-const serverList = document.getElementById('server-list');
-const currentServerName = document.getElementById('current-server-name');
+const emojiPicker = document.getElementById('emoji-picker');
+const overlayBg = document.getElementById('overlay-bg');
 
-// Variáveis de Estado
 let currentServerId = 'global';
 let userProfile = { name: 'Usuário', avatar: 'https://via.placeholder.com/32', font: "'Inter', sans-serif", bio: '' };
-let editingServerId = null;
+
+// --- MENU MOBILE ---
+const mobileMenuBtn = document.getElementById('mobile-menu-btn');
+const serverSidebar = document.getElementById('server-sidebar');
+const channelSidebar = document.getElementById('channel-sidebar');
+
+mobileMenuBtn.addEventListener('click', () => {
+    serverSidebar.classList.add('open');
+    channelSidebar.classList.add('open');
+    overlayBg.classList.remove('hidden');
+});
+
+overlayBg.addEventListener('click', () => {
+    serverSidebar.classList.remove('open');
+    channelSidebar.classList.remove('open');
+    overlayBg.classList.add('hidden');
+});
 
 // --- PERFIL ---
 const userRef = ref(db, 'users/' + userId);
@@ -45,19 +54,32 @@ onValue(userRef, (snapshot) => {
         myName.innerText = userProfile.name;
         myName.style.fontFamily = userProfile.font;
         myAvatar.src = userProfile.avatar;
-        // Preencher modal
+        
+        // Preencher modais
         document.getElementById('edit-name').value = userProfile.name;
         document.getElementById('edit-bio').value = userProfile.bio || '';
         document.getElementById('edit-font').value = userProfile.font;
+        
+        document.getElementById('view-name').innerText = userProfile.name;
+        document.getElementById('view-name').style.fontFamily = userProfile.font;
+        document.getElementById('view-bio').innerText = userProfile.bio || 'Sem bio.';
+        document.getElementById('view-avatar').src = userProfile.avatar;
     } else {
         set(userRef, userProfile);
     }
 });
 
-document.getElementById('edit-profile-btn').addEventListener('click', () => profileModal.classList.remove('hidden'));
-document.querySelector('.close-modal').addEventListener('click', () => profileModal.classList.add('hidden'));
+// Abrir Modais
+document.getElementById('edit-profile-btn').addEventListener('click', () => document.getElementById('edit-profile-modal').classList.remove('hidden'));
+document.getElementById('open-profile-btn').addEventListener('click', () => document.getElementById('view-profile-modal').classList.remove('hidden'));
+document.querySelectorAll('.close-modal').forEach(btn => {
+    btn.addEventListener('click', () => {
+        document.getElementById('edit-profile-modal').classList.add('hidden');
+        document.getElementById('view-profile-modal').classList.add('hidden');
+    });
+});
 
-// Converter Avatar para Base64
+// Salvar Perfil
 let newAvatarBase64 = null;
 document.getElementById('edit-avatar').addEventListener('change', function(e) {
     const file = e.target.files[0];
@@ -76,18 +98,22 @@ document.getElementById('save-profile').addEventListener('click', () => {
         avatar: newAvatarBase64 || userProfile.avatar
     });
     newAvatarBase64 = null;
-    profileModal.classList.add('hidden');
+    document.getElementById('edit-profile-modal').classList.add('hidden');
 });
 
-// --- SERVIDORES (CRUD) ---
+// --- SERVIDORES ---
 const serversRef = ref(db, 'servers');
+const serverList = document.getElementById('server-list');
+const currentServerName = document.getElementById('current-server-name');
+const serverModal = document.getElementById('server-modal');
+let editingServerId = null;
+
 onValue(serversRef, (snapshot) => {
     serverList.innerHTML = '';
     if (snapshot.exists()) {
         const servers = snapshot.val();
         for (const id in servers) {
             const s = servers[id];
-            // Só mostra se for dono ou público
             const div = document.createElement('div');
             div.className = `server-icon ${currentServerId === id ? 'active' : ''}`;
             div.innerHTML = `<span>${s.name.substring(0, 2).toUpperCase()}</span>`;
@@ -100,7 +126,7 @@ onValue(serversRef, (snapshot) => {
 document.getElementById('create-server-btn').addEventListener('click', () => {
     editingServerId = null;
     document.getElementById('server-modal-title').innerText = 'Criar Servidor';
-    serverNameInput.value = '';
+    document.getElementById('server-name-input').value = '';
     document.getElementById('delete-server-btn').classList.add('hidden');
     serverModal.classList.remove('hidden');
 });
@@ -109,7 +135,7 @@ document.getElementById('edit-server-btn').addEventListener('click', () => {
     if (currentServerId === 'global') return;
     editingServerId = currentServerId;
     document.getElementById('server-modal-title').innerText = 'Editar Servidor';
-    serverNameInput.value = currentServerName.innerText;
+    document.getElementById('server-name-input').value = currentServerName.innerText;
     document.getElementById('delete-server-btn').classList.remove('hidden');
     serverModal.classList.remove('hidden');
 });
@@ -117,15 +143,10 @@ document.getElementById('edit-server-btn').addEventListener('click', () => {
 document.querySelector('.close-server-modal').addEventListener('click', () => serverModal.classList.add('hidden'));
 
 document.getElementById('save-server-btn').addEventListener('click', () => {
-    const name = serverNameInput.value.trim();
+    const name = document.getElementById('server-name-input').value.trim();
     if (!name) return;
-
-    if (editingServerId) {
-        update(ref(db, 'servers/' + editingServerId), { name });
-    } else {
-        const newRef = push(serversRef);
-        set(newRef, { name, owner: userId });
-    }
+    if (editingServerId) update(ref(db, 'servers/' + editingServerId), { name });
+    else set(push(serversRef), { name, owner: userId });
     serverModal.classList.add('hidden');
 });
 
@@ -137,20 +158,26 @@ document.getElementById('delete-server-btn').addEventListener('click', () => {
     }
 });
 
-// Alternar Servidor
 function switchServer(id, name) {
     currentServerId = id;
     currentServerName.innerText = name;
     document.getElementById('edit-server-btn').classList.toggle('hidden', id === 'global');
-    
-    // Atualizar ícones ativos
     document.querySelectorAll('.server-icon').forEach(el => el.classList.remove('active'));
     if (id === 'global') document.querySelector('[data-server="global"]').classList.add('active');
-    
     loadMessages();
+    // Fechar menu mobile se estiver aberto
+    serverSidebar.classList.remove('open');
+    channelSidebar.classList.remove('open');
+    overlayBg.classList.add('hidden');
 }
 
-// --- CHAT ---
+// --- CHAT & EMOJIS ---
+document.getElementById('emoji-btn').addEventListener('click', () => emojiPicker.classList.toggle('hidden'));
+window.insertEmoji = (emoji) => {
+    messageInput.value += emoji;
+    messageInput.focus();
+};
+
 function loadMessages() {
     messagesContainer.innerHTML = '';
     const chatRef = ref(db, `messages/${currentServerId}/geral`);
@@ -163,7 +190,7 @@ function loadMessages() {
             <div class="msg-content">
                 <div class="msg-header">
                     <span style="font-family: ${data.font}">${data.name}</span>
-                    <small>${new Date(data.timestamp).toLocaleTimeString()}</small>
+                    <small>${new Date(data.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</small>
                 </div>
                 <div class="msg-text">${data.text}</div>
             </div>
@@ -173,9 +200,6 @@ function loadMessages() {
     });
 }
 
-document.getElementById('send-btn').addEventListener('click', sendMessage);
-messageInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') sendMessage(); });
-
 function sendMessage() {
     const text = messageInput.value.trim();
     if (!text) return;
@@ -183,105 +207,107 @@ function sendMessage() {
         userId, name: userProfile.name, avatar: userProfile.avatar, font: userProfile.font, text, timestamp: Date.now()
     });
     messageInput.value = '';
+    emojiPicker.classList.add('hidden');
 }
 
-// Inicialização do Chat
+document.getElementById('send-btn').addEventListener('click', sendMessage);
+messageInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') sendMessage(); });
+
 loadMessages();
 
-// --- WEBRTC (CALL E VÍDEO) ---
+// --- WEBRTC (CHAMADAS) ---
 let localStream;
 let peerConnection;
-const servers = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] };
+const rtcConfig = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] };
+const callOverlay = document.getElementById('call-overlay');
+const localVideo = document.getElementById('local-video');
+const remoteVideo = document.getElementById('remote-video');
 
-// Cria a conexão P2P
-function createPeerConnection() {
-    peerConnection = new RTCPeerConnection(servers);
-    
-    peerConnection.onicecandidate = (event) => {
-        if (event.candidate) {
-            push(ref(db, `calls/${userId}/candidates`), event.candidate.toJSON());
-        }
-    };
-
-    peerConnection.ontrack = (event) => {
-        document.getElementById('remote-video').srcObject = event.streams[0];
-        document.getElementById('video-call-container').classList.remove('hidden');
-    };
-
-    if (localStream) {
-        localStream.getTracks().forEach(track => peerConnection.addTrack(track, localStream));
-    }
-}
-
-// Iniciar Chamada (Áudio/Vídeo)
-async function startCall(video = false) {
+async function initCall(video = true) {
     try {
         localStream = await navigator.mediaDevices.getUserMedia({ video, audio: true });
-        document.getElementById('local-video').srcObject = localStream;
-        document.getElementById('video-call-container').classList.remove('hidden');
+        localVideo.srcObject = localStream;
+        callOverlay.classList.remove('hidden');
         
-        createPeerConnection();
+        peerConnection = new RTCPeerConnection(rtcConfig);
+        localStream.getTracks().forEach(track => peerConnection.addTrack(track, localStream));
 
-        // Cria a Oferta
+        peerConnection.onicecandidate = (event) => {
+            if (event.candidate) push(ref(db, `calls/${currentServerId}/candidates`), event.candidate.toJSON());
+        };
+
+        peerConnection.ontrack = (event) => {
+            remoteVideo.srcObject = event.streams[0];
+        };
+
         const offer = await peerConnection.createOffer();
         await peerConnection.setLocalDescription(offer);
-        
-        // Envia a oferta para o Firebase (Neste exemplo, para a sala 'global')
-        set(ref(db, `calls/global/offer`), { offer, caller: userId });
-        
+        set(ref(db, `calls/${currentServerId}/offer`), { offer, caller: userId });
+
     } catch (err) {
-        console.error("Erro ao acessar mídia:", err);
+        alert("Erro ao acessar câmera/microfone: " + err.message);
     }
 }
 
-// Escutar Ofertas (Para quem recebe a chamada)
-onValue(ref(db, 'calls/global/offer'), async (snapshot) => {
+// Receber Chamada
+onValue(ref(db, `calls/${currentServerId}/offer`), async (snapshot) => {
     const data = snapshot.val();
     if (data && data.caller !== userId && !peerConnection) {
-        createPeerConnection();
-        await peerConnection.setRemoteDescription(new RTCSessionDescription(data.offer));
+        callOverlay.classList.remove('hidden');
+        peerConnection = new RTCPeerConnection(rtcConfig);
         
-        // Cria a Resposta
+        peerConnection.onicecandidate = (event) => {
+            if (event.candidate) push(ref(db, `calls/${currentServerId}/candidates`), event.candidate.toJSON());
+        };
+        peerConnection.ontrack = (event) => { remoteVideo.srcObject = event.streams[0]; };
+
+        await peerConnection.setRemoteDescription(new RTCSessionDescription(data.offer));
         const answer = await peerConnection.createAnswer();
         await peerConnection.setLocalDescription(answer);
-        
-        set(ref(db, `calls/global/answer`), { answer, answerer: userId });
-        
-        // Pega mídia do receptor
+        set(ref(db, `calls/${currentServerId}/answer`), { answer, answerer: userId });
+
         localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
         localStream.getTracks().forEach(track => peerConnection.addTrack(track, localStream));
-        document.getElementById('local-video').srcObject = localStream;
-        document.getElementById('video-call-container').classList.remove('hidden');
+        localVideo.srcObject = localStream;
     }
 });
 
-// Escutar Respostas (Para quem iniciou a chamada)
-onValue(ref(db, 'calls/global/answer'), async (snapshot) => {
+onValue(ref(db, `calls/${currentServerId}/answer`), async (snapshot) => {
     const data = snapshot.val();
     if (data && data.answerer !== userId && peerConnection && !peerConnection.currentRemoteDescription) {
         await peerConnection.setRemoteDescription(new RTCSessionDescription(data.answer));
     }
 });
 
-// Escutar ICE Candidates
-onChildAdded(ref(db, `calls/${userId}/candidates`), async (snapshot) => {
-    const candidate = snapshot.val();
-    if (peerConnection) {
-        await peerConnection.addIceCandidate(new RTCIceCandidate(candidate));
+onChildAdded(ref(db, `calls/${currentServerId}/candidates`), async (snapshot) => {
+    if (peerConnection) await peerConnection.addIceCandidate(new RTCIceCandidate(snapshot.val()));
+});
+
+// Controles de Chamada
+document.getElementById('toggle-mic').addEventListener('click', function() {
+    const track = localStream.getAudioTracks()[0];
+    track.enabled = !track.enabled;
+    this.classList.toggle('active');
+});
+
+document.getElementById('toggle-video').addEventListener('click', function() {
+    const track = localStream.getVideoTracks()[0];
+    if (track) {
+        track.enabled = !track.enabled;
+        this.classList.toggle('active');
+        localVideo.style.opacity = track.enabled ? '1' : '0.2';
     }
 });
 
-// Botões de Chamada
-document.getElementById('start-audio-call').addEventListener('click', () => startCall(false));
-document.getElementById('start-video-call').addEventListener('click', () => startCall(true));
-
-// Encerrar Chamada
 document.getElementById('end-call').addEventListener('click', () => {
     if (peerConnection) peerConnection.close();
     if (localStream) localStream.getTracks().forEach(track => track.stop());
-    document.getElementById('video-call-container').classList.add('hidden');
-    // Limpar do Firebase
-    remove(ref(db, 'calls/global/offer'));
-    remove(ref(db, 'calls/global/answer'));
+    callOverlay.classList.add('hidden');
+    remove(ref(db, `calls/${currentServerId}/offer`));
+    remove(ref(db, `calls/${currentServerId}/answer`));
     peerConnection = null;
+    localStream = null;
 });
+
+document.getElementById('start-audio-call').addEventListener('click', () => initCall(false));
+document.getElementById('start-video-call').addEventListener('click', () => initCall(true));
